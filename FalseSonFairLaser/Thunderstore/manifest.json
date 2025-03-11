@@ -1,0 +1,12 @@
+﻿{
+	"name": "FalseSonFairLaser",
+	"version_number": "1.0.0",
+	"website_url": "https://github.com/robotzurg/FalseSonFairLaser",
+	"description": "A mod that makes the False Son Laser a bit more fair.",
+	"dependencies": [
+		"bbepis-BepInExPack-5.4.2109",
+    	"RiskofThunder-HookGenPatcher-1.2.3",
+    	"RiskofThunder-R2API_Core-5.1.5",
+		"RiskofThunder-R2API_ContentManagement-1.0.8"
+	]
+}
