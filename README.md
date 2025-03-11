@@ -1,2 +1,2 @@
-# SotsEnemyTweaks
-A tweak mod for Risk of Rain 2 that tweaks the False Son Boss as well as some enemies.
+# FalseSonFairLaser
+A tweak mod for Risk Of Rain 2 that makes the False Son stay still during the laser and bulk up, cause him going after you is quite unfair!
