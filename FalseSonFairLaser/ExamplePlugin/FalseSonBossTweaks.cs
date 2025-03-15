@@ -11,7 +11,7 @@ using EntityStates.PrimeMeridian;
 using UnityEngine.Networking;
 using RoR2.Skills;
 using RoR2.ContentManagement;
-using BepInEx.Configuration;
+//using BepInEx.Configuration;
 
 namespace FalseSonBossTweaks
 {
@@ -21,17 +21,17 @@ namespace FalseSonBossTweaks
     {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
-        public const string PluginName = "FalseSonFairLaser";
+        public const string PluginName = "FalseSonBossTweaks";
         public const string PluginVersion = "1.0.0";
 
         public MeridianEventState bossPhase = MeridianEventState.None;
-        internal static ConfigEntry<bool> stage4GreenOrb { get; private set; }
+        //internal static ConfigEntry<bool> stage4GreenOrb { get; private set; }
 
         public void Awake()
         {
             Log.Init(Logger);
 
-            stage4GreenOrb = Config.Bind<bool>("Main", "Spawn a Green Orb on Stage 4", false, "Spawns a guaranteed green orb on stage 4, to give you an extra stage to fight the False Son with.");
+            //stage4GreenOrb = Config.Bind<bool>("Main", "Spawn a Green Orb on Stage 4", false, "Spawns a guaranteed green orb on stage 4, to give you an extra stage to fight the False Son with.");
 
             On.RoR2.MeridianEventLightningTrigger.Start += (orig, self) =>
             {
