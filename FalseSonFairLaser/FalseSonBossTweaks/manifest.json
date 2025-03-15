@@ -1,0 +1,14 @@
+﻿{
+	"name": "FalseSonBossTweaks",
+	"version_number": "1.0.0",
+	"website_url": "https://github.com/robotzurg/FalseSonBossTweaks",
+	"description": "A mod that tweaks the False Son Boss to be more fun and fair.",
+	"dependencies": [
+		"bbepis-BepInExPack-5.4.2109",
+    	"RiskofThunder-HookGenPatcher-1.2.3",
+    	"RiskofThunder-R2API_Core-5.1.5",
+		"RiskofThunder-R2API_ContentManagement-1.0.8",
+		"RiskofThunder-R2API_Skills-1.0.1",
+		"Jeffdev-LaserRampFix-1.0.0"
+	]
+}

@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace FalseSonFairLaser
+namespace FalseSonBossTweaks
 {
     internal static class Log
     {
