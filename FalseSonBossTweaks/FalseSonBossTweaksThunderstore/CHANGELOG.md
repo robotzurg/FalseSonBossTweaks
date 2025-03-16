@@ -1,3 +1,8 @@
+## 1.0.2
+- Fixed an issue where the phase 2 laser cooldown wasn't being reduced properly in Eclipse 7.
+- Changed the Phase 2 Combat Director to only spawn a maximum of 3 golems, rather than 5.
+- Changed the Phase 2 Combat Director to only spawn normal golems, rather than sometimes spawning elites.
+
 ## 1.0.1
 - Fixed an issue where the cooldown for laser and skill disable skills weren't being reduced properly
 - Fixed an issue where Stone Golem lasers would have double the cooldown on eclipse 7 (oops)
