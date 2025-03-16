@@ -11,6 +11,7 @@ using EntityStates.PrimeMeridian;
 using UnityEngine.Networking;
 using RoR2.Skills;
 using RoR2.ContentManagement;
+using EntityStates.FalseSonBoss;
 //using BepInEx.Configuration;
 
 namespace FalseSonBossTweaks
@@ -39,8 +40,7 @@ namespace FalseSonBossTweaks
                 orig(self);
             };
 
-            On.EntityStates.FalseSonBoss.CorruptedPathsDash.OnEnter += CorruptedPathsDash_OnEnter;
-            On.EntityStates.FalseSonBoss.CorruptedPathsDash.OnExit += CorruptedPathsDash_OnExit;
+            On.EntityStates.FalseSonBoss.CorruptedPathsDash.GetNextStateAuthority += CorruptedPathsDash_GetNextStateAuthority;
             On.EntityStates.FalseSonBoss.LunarGazeHoldLeap.OnEnter += LunarGazeHoldLeap_OnEnter;
             On.EntityStates.PrimeMeridian.LunarGazeLaserEnd.OnEnter += LunarGazeLaserEnd_OnEnter;
 
@@ -51,12 +51,37 @@ namespace FalseSonBossTweaks
             RoR2.Run.onRunStartGlobal += Run_onRunStartGlobal;
             RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
 
-            On.RoR2.SceneDirector.PopulateScene += SceneDirector_PopulateScene;
+            Log.Debug("Done.");
 
             //On.RoR2.TeleporterInteraction.Start += TeleporterInteraction_Start;
 
             //// IL Hooking
-            //IL.EntityStates.PrimeMeridian.LunarGazeLaserFire.FireBullet += LunarGazeLaserFire_FireBullet;
+            //IL.EntityStates.FalseSonBoss.CorruptedPathsDash.FixedUpdate += CorruptedPathsDash_FixedUpdate; ;
+        }
+
+        private EntityState CorruptedPathsDash_GetNextStateAuthority(On.EntityStates.FalseSonBoss.CorruptedPathsDash.orig_GetNextStateAuthority orig, CorruptedPathsDash self)
+        {
+            self.skillLocator.primary.DeductStock(2);
+
+            // Schedule transition after 0.35 seconds, to give it a bit more time
+            return new DelayedState(0.35f, new FissureSlamWindup());
+        }
+
+        // Custom DelayedState for delaying transitions
+        public class DelayedState(float delay, EntityState nextState) : EntityState
+        {
+            private readonly float delay = delay;
+            private readonly EntityState nextState = nextState;
+
+            public override void Update()
+            {
+                base.Update();
+
+                if (base.fixedAge >= delay)
+                {
+                    outer.SetNextState(nextState);
+                }
+            }
         }
 
         //private void TeleporterInteraction_Start(On.RoR2.TeleporterInteraction.orig_Start orig, TeleporterInteraction self)
@@ -78,63 +103,49 @@ namespace FalseSonBossTweaks
         //    }
         //}
 
-        private void SceneDirector_PopulateScene(On.RoR2.SceneDirector.orig_PopulateScene orig, SceneDirector self)
-        {
-            orig(self);
-        }
-
-        private void CorruptedPathsDash_OnEnter(On.EntityStates.FalseSonBoss.CorruptedPathsDash.orig_OnEnter orig, EntityStates.FalseSonBoss.CorruptedPathsDash self)
-        {
-            if (Run.instance.selectedDifficulty >= DifficultyIndex.Eclipse4)
-            {
-                self.characterBody.AddBuff(RoR2Content.Buffs.Slow60);
-            }
-
-            orig(self);
-        }
-
-        private void CorruptedPathsDash_OnExit(On.EntityStates.FalseSonBoss.CorruptedPathsDash.orig_OnExit orig, EntityStates.FalseSonBoss.CorruptedPathsDash self)
-        {
-            if (self.characterBody.HasBuff(RoR2Content.Buffs.Slow60)) 
-            {
-                self.characterBody.RemoveBuff(RoR2Content.Buffs.Slow60);
-            }
-
-            orig(self);
-        }
+        //private void SceneDirector_PopulateScene(On.RoR2.SceneDirector.orig_PopulateScene orig, SceneDirector self)
+        //{
+        //    orig(self);
+        //}
 
         private void Run_onRunStartGlobal(Run obj)
         {
-            if (Run.instance.selectedDifficulty >= DifficultyIndex.Eclipse7)
+            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7)
             {
-                SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(324);
-                SkillDef laserSkill = SkillCatalog.GetSkillDef(320);
-                SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(321);
+                SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
+                SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarGazePlus"));
+
+                if (primeDevestatorSkill == null || lunarGazePlusSkill == null)
+                {
+                    Log.Error($"One or more SkillDefs could not be found! Check skill names. {primeDevestatorSkill} | {lunarGazePlusSkill}");
+                    return;
+                }
 
                 primeDevestatorSkill.baseRechargeInterval *= 2;
-                laserSkill.baseRechargeInterval *= 2;
                 lunarGazePlusSkill.baseRechargeInterval *= 2;
 
                 Log.Debug($"Devestator Skill Cooldown: {primeDevestatorSkill.baseRechargeInterval}");
-                Log.Debug($"Laser Skill Cooldown: {laserSkill.baseRechargeInterval}");
                 Log.Debug($"Lunar Gaze Plus Skill Cooldown: {lunarGazePlusSkill.baseRechargeInterval}");
             }
         }
 
         private void Run_onRunDestroyGlobal(Run obj)
         {
-            if (Run.instance.selectedDifficulty >= DifficultyIndex.Eclipse7)
+            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7)
             {
-                SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(324);
-                SkillDef laserSkill = SkillCatalog.GetSkillDef(320);
-                SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(321);
+                SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
+                SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarGazePlus"));
+
+                if (primeDevestatorSkill == null || lunarGazePlusSkill == null)
+                {
+                    Log.Error($"One or more SkillDefs could not be found! Check skill names. {primeDevestatorSkill} | {lunarGazePlusSkill}");
+                    return;
+                }
 
                 primeDevestatorSkill.baseRechargeInterval *= 0.5f;
-                laserSkill.baseRechargeInterval *= 0.5f;
                 lunarGazePlusSkill.baseRechargeInterval *= 0.5f;
 
                 Log.Debug($"Devestator Skill Cooldown: {primeDevestatorSkill.baseRechargeInterval}");
-                Log.Debug($"Laser Skill Cooldown: {laserSkill.baseRechargeInterval}");
                 Log.Debug($"Lunar Gaze Plus Skill Cooldown: {lunarGazePlusSkill.baseRechargeInterval}");
             }
         }

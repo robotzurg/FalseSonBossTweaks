@@ -1,3 +1,10 @@
+## 1.0.1
+- Fixed an issue where the cooldown for laser and skill disable skills weren't being reduced properly
+- Fixed an issue where Stone Golem lasers would have double the cooldown on eclipse 7 (oops)
+- Potentially fixed some multiplayer related issues (I hope)
+- Removed the length reduction for False Son dash on Eclipse 4 or higher (wasn't working properly anyways lol)
+- Added a new way to nerf the dash a bit, False Son will now stall for 0.5 seconds, then properly do a windup before slamming, rather than insta slamming. This feels a lot nicer in practice than the vanilla slam, while still being very threatening.
+
 ## 1.0.0
 
 - First release of renamed FalseSonFairLaser
