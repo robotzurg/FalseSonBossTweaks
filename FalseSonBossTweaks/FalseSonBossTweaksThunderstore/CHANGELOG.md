@@ -1,3 +1,11 @@
+## 1.0.4
+- Changed the time from dash to slam windup from 0.5s to 0.75s.
+- (Hopefully?) fixed an issue where the false son would still spawn elite golems at times. 
+- Changed the phase 2 combat director to spawn 4 golems, up from 3 changed in 1.0.2. (Feels a bit closer to the original fight, and knocking away elite golems helps well enough.)
+
+## 1.0.3
+- Fixed yet another issue with the phase 2 laser cooldown (can you tell I hate this skill yet)
+
 ## 1.0.2
 - Fixed an issue where the phase 2 laser cooldown wasn't being reduced properly in Eclipse 7.
 - Changed the Phase 2 Combat Director to only spawn a maximum of 3 golems, rather than 5.

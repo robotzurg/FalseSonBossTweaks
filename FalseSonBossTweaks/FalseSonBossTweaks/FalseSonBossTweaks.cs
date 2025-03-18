@@ -24,7 +24,7 @@ namespace FalseSonBossTweaks
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "FalseSonBossTweaks";
-        public const string PluginVersion = "1.0.2";
+        public const string PluginVersion = "1.0.4";
 
         public MeridianEventState bossPhase = MeridianEventState.None;
         //internal static ConfigEntry<bool> stage4GreenOrb { get; private set; }
@@ -69,8 +69,8 @@ namespace FalseSonBossTweaks
                 CombatDirector director = self.phase2CombatDirector.GetComponent<CombatDirector>();
                 if (director)
                 {
-                    director.maxSquadCount = 3;
-                    director.eliteBias = 0f;
+                    director.maxSquadCount = 4;
+                    director.eliteBias = 9999;
                 }
             }
         }
@@ -79,8 +79,8 @@ namespace FalseSonBossTweaks
         {
             self.skillLocator.primary.DeductStock(2);
 
-            // Schedule transition after 0.35 seconds, to give it a bit more time
-            return new DelayedState(0.35f, new FissureSlamWindup());
+            // Schedule transition after 0.75 seconds, to give it a bit more time
+            return new DelayedState(0.75f, new FissureSlamWindup());
         }
 
         // Custom DelayedState for delaying transitions
@@ -156,7 +156,7 @@ namespace FalseSonBossTweaks
             {
                 SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
                 SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarGazePlus"));
-                SkillDef lunarGazeSkill = SkillCatalog.allSkillDefs.FirstOrDefault(skill => skill.skillName == "Laser" && skill.baseRechargeInterval == 35f);
+                SkillDef lunarGazeSkill = SkillCatalog.allSkillDefs.FirstOrDefault(skill => skill.skillName == "Laser" && skill.baseRechargeInterval == 70f);
 
                 if (primeDevestatorSkill == null || lunarGazePlusSkill == null || lunarGazeSkill == null)
                 {
