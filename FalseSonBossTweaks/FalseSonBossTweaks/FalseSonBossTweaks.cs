@@ -13,6 +13,7 @@ using RoR2.Skills;
 using RoR2.ContentManagement;
 using EntityStates.FalseSonBoss;
 using System.Linq;
+using BepInEx.Configuration;
 //using BepInEx.Configuration;
 
 namespace FalseSonBossTweaks
@@ -24,20 +25,30 @@ namespace FalseSonBossTweaks
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "FalseSonBossTweaks";
-        public const string PluginVersion = "1.0.4";
+        public const string PluginVersion = "1.0.6";
 
         public MeridianEventState bossPhase = MeridianEventState.None;
-        //internal static ConfigEntry<bool> stage4GreenOrb { get; private set; }
+        public static ConfigEntry<int> monsterCredits;
+        public static ConfigEntry<float> dashSlamTime;
+        public static ConfigEntry<bool> eliteGolems;
+        public static ConfigEntry<int> golemAmount;
+        public static ConfigEntry<bool> eclipseSevenChanges;
+        public static ConfigEntry<bool> slowFalseSonLaser;
 
         public void Awake()
         {
             Log.Init(Logger);
 
-            //stage4GreenOrb = Config.Bind<bool>("Main", "Spawn a Green Orb on Stage 4", false, "Spawns a guaranteed green orb on stage 4, to give you an extra stage to fight the False Son with.");
+            monsterCredits = Config.Bind("General", "Meridian Credits", 320, "Change the amount of monster credits Prime Meridian has (450 is vanilla default)");
+            dashSlamTime = Config.Bind("General", "Time Between Dash and Slam", 0.4f, "Idle time between the dash and slam attack. (0 will make the boss have no idle time, which is how vanilla works. Keep it between 0-1 second, or else jank will happen.)");
+            eliteGolems = Config.Bind("General", "Pre Loop Elite Golems in Fight", false, "Allow golems to be elite in the fight in pre loop (true is vanilla default)");
+            golemAmount = Config.Bind("General", "Max Golems in Fight", 4, "Max number of golems allowed to be spawned (5 is vanilla default)");
+            eclipseSevenChanges = Config.Bind("General", "Eclipse 7 Laser/Skill Disable Changes", true, "Change the skill cooldowns to be longer for laser and skill disable attacks in Eclipse 7 (false is vanilla default)");
+            slowFalseSonLaser = Config.Bind("General", "Slow False Son during Phase 2 Laser", true, "Gives the False Son a slowing debuff during Phase 2 (false is vanilla default)");
 
             On.RoR2.MeridianEventLightningTrigger.Start += (orig, self) =>
             {
-                self.levelstartMonsterCredit = 320;
+                self.levelstartMonsterCredit = monsterCredits.Value;
                 orig(self);
             };
 
@@ -69,8 +80,18 @@ namespace FalseSonBossTweaks
                 CombatDirector director = self.phase2CombatDirector.GetComponent<CombatDirector>();
                 if (director)
                 {
-                    director.maxSquadCount = 4;
-                    director.eliteBias = 9999;
+                    director.maxSquadCount = (uint)golemAmount.Value;
+                    bool isLooping = Run.instance && Run.instance.loopClearCount > 0;
+
+                    if (!isLooping && eliteGolems.Value == false)
+                    {
+                        director.eliteBias = 9999;
+                    }
+                    else
+                    {
+                        director.eliteBias = 0;
+                    }
+                    
                 }
             }
         }
@@ -79,8 +100,15 @@ namespace FalseSonBossTweaks
         {
             self.skillLocator.primary.DeductStock(2);
 
-            // Schedule transition after 0.75 seconds, to give it a bit more time
-            return new DelayedState(0.75f, new FissureSlamWindup());
+            // Schedule transition after 0.4 seconds by default, to give it a bit more time
+            if (dashSlamTime.Value != 0)
+            {
+                return new DelayedState(dashSlamTime.Value, new FissureSlamWindup());
+            } else
+            {
+                return new DelayedState(0.01f, new FissureSlamWindup());
+            }
+            
         }
 
         // Custom DelayedState for delaying transitions
@@ -100,35 +128,10 @@ namespace FalseSonBossTweaks
             }
         }
 
-        //private void TeleporterInteraction_Start(On.RoR2.TeleporterInteraction.orig_Start orig, TeleporterInteraction self)
-        //{
-        //    orig(self);
-        //    if (Run.instance.stageClearCount != 3)
-        //    {
-        //        return;
-        //    }
-        //    TeleporterInteraction.instance.shouldAttemptToSpawnShopPortal = true;
-        //    PortalStatueBehavior[] array = Object.FindObjectsOfType<PortalStatueBehavior>();
-        //    PurchaseInteraction val2 = default(PurchaseInteraction);
-        //    foreach (PortalStatueBehavior val in array)
-        //    {
-        //        if ((int)val.portalType == 0 && ((Component)val).TryGetComponent<PurchaseInteraction>(ref val2))
-        //        {
-        //            val2.Networkavailable = false;
-        //        }
-        //    }
-        //}
-
-        //private void SceneDirector_PopulateScene(On.RoR2.SceneDirector.orig_PopulateScene orig, SceneDirector self)
-        //{
-        //    orig(self);
-        //
-
-
         private void Run_onRunStartGlobal(Run obj)
         {
             Log.Debug($"{obj.selectedDifficulty} {DifficultyIndex.Eclipse7}");
-            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7)
+            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7 && eclipseSevenChanges.Value == true)
             {
                 SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
                 SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarGazePlus"));
@@ -140,9 +143,9 @@ namespace FalseSonBossTweaks
                     return;
                 }
 
-                primeDevestatorSkill.baseRechargeInterval *= 2;
-                lunarGazePlusSkill.baseRechargeInterval *= 2;
-                lunarGazeSkill.baseRechargeInterval *= 2;
+                primeDevestatorSkill.baseRechargeInterval *= 1.5f;
+                lunarGazePlusSkill.baseRechargeInterval *= 1.5f;
+                lunarGazeSkill.baseRechargeInterval *= 1.5f;
 
                 Log.Debug($"Devestator Skill Cooldown: {primeDevestatorSkill.baseRechargeInterval}");
                 Log.Debug($"Lunar Gaze Plus Skill Cooldown: {lunarGazePlusSkill.baseRechargeInterval}");
@@ -152,11 +155,11 @@ namespace FalseSonBossTweaks
 
         private void Run_onRunDestroyGlobal(Run obj)
         {
-            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7)
+            if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7 && eclipseSevenChanges.Value == true)
             {
                 SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
                 SkillDef lunarGazePlusSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarGazePlus"));
-                SkillDef lunarGazeSkill = SkillCatalog.allSkillDefs.FirstOrDefault(skill => skill.skillName == "Laser" && skill.baseRechargeInterval == 70f);
+                SkillDef lunarGazeSkill = SkillCatalog.allSkillDefs.FirstOrDefault(skill => skill.skillName == "Laser" && skill.baseRechargeInterval == 52.5f);
 
                 if (primeDevestatorSkill == null || lunarGazePlusSkill == null || lunarGazeSkill == null)
                 {
@@ -164,9 +167,9 @@ namespace FalseSonBossTweaks
                     return;
                 }
 
-                primeDevestatorSkill.baseRechargeInterval *= 0.5f;
-                lunarGazePlusSkill.baseRechargeInterval *= 0.5f;
-                lunarGazeSkill.baseRechargeInterval *= 0.5f;
+                primeDevestatorSkill.baseRechargeInterval /= 1.5f;
+                lunarGazePlusSkill.baseRechargeInterval /= 1.5f;
+                lunarGazeSkill.baseRechargeInterval /= 1.5f;
 
                 Log.Debug($"Devestator Skill Cooldown: {primeDevestatorSkill.baseRechargeInterval}");
                 Log.Debug($"Lunar Gaze Plus Skill Cooldown: {lunarGazePlusSkill.baseRechargeInterval}");
@@ -210,7 +213,7 @@ namespace FalseSonBossTweaks
         {
             orig(self);
             Log.Debug("Added Debuff to False Son!");
-            if (this.bossPhase == MeridianEventState.Phase2)
+            if (this.bossPhase == MeridianEventState.Phase2 && slowFalseSonLaser.Value == true)
             {
                 self.characterBody.AddBuff(RoR2Content.Buffs.Slow80);
             }

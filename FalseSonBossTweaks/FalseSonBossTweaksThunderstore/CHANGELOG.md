@@ -1,5 +1,14 @@
+## 1.0.6
+- Fixed one of the configurations mentioning Shrine of Shaping when it was actually about the dash to slam time.
+
+## 1.0.5
+- Made all changes to the mod configurable.
+- Changed default dash to slam time from 0.75s to 0.4s (last time it will be changed since its configurable now)
+- Reduced the cooldown increase for Eclipse 7 changes from 2x to 1.5x (basically, it's now 25% cooldown decrease on eclipse 7, rather than no cooldown increase, as it negated eclipse 7 a bit too much.)
+- Elite golems will now appear on the fight if you have looped at least once, by default. They will not appear pre loop.
+
 ## 1.0.4
-- Changed the time from dash to slam windup from 0.5s to 0.75s.
+- Changed the time from dash to slam windup from 0.35s to 0.75s.
 - (Hopefully?) fixed an issue where the false son would still spawn elite golems at times. 
 - Changed the phase 2 combat director to spawn 4 golems, up from 3 changed in 1.0.2. (Feels a bit closer to the original fight, and knocking away elite golems helps well enough.)
 
@@ -19,7 +28,6 @@
 - Added a new way to nerf the dash a bit, False Son will now stall for 0.5 seconds, then properly do a windup before slamming, rather than insta slamming. This feels a lot nicer in practice than the vanilla slam, while still being very threatening.
 
 ## 1.0.0
-
 - First release of renamed FalseSonFairLaser
 - Changed False Son from being completely stopped and gaining 2000 armor, to instead being heavily slowed during the phase 2 laser.
 - Changed Phase 3 to be unaffected by this mod (it's not really needed cause of the small arena, and it kinda trivializes the entire 3rd phase)
