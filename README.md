@@ -1,6 +1,6 @@
 # False Son Boss Tweaks
 
-A mod that tweaks the False Son fight, and has various changes. Changes include:
+A Risk of Rain 2 mod that tweaks the False Son fight, and has various changes. Changes include:
 
 - Tweaks to Eclipse difficulty False Son fight, to make it more fair (less laser/skill steal cooldown)
 - Adds a very small delay between the False Son dash and slam, to give you a bit more time to dodge it
