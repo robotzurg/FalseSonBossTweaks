@@ -1,3 +1,16 @@
+## 1.1.0
+- Added a (disabled by default) config to have the False Son boss slow down during phase 3 laser.
+
+## 1.0.9
+- Removed the dependency on LaserRampFix again, oops (that wasn't supposed to be there)
+- Lowered the time between phase 2 and 3 to allow for a better music sync
+
+## 1.0.8
+- Reduced the amount of lightning that spawns during Prime Meridian (toggleable)
+
+## 1.0.7
+- Removed dependency on LaserRampFix as its added in the base game.
+
 ## 1.0.6
 - Fixed one of the configurations mentioning Shrine of Shaping when it was actually about the dash to slam time.
 

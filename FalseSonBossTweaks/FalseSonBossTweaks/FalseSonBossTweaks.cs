@@ -14,6 +14,8 @@ using RoR2.ContentManagement;
 using EntityStates.FalseSonBoss;
 using System.Linq;
 using BepInEx.Configuration;
+using HG.GeneralSerializer;
+using R2API.Utils;
 //using BepInEx.Configuration;
 
 namespace FalseSonBossTweaks
@@ -25,26 +27,30 @@ namespace FalseSonBossTweaks
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "FalseSonBossTweaks";
-        public const string PluginVersion = "1.0.6";
+        public const string PluginVersion = "1.1.0";
 
         public MeridianEventState bossPhase = MeridianEventState.None;
         public static ConfigEntry<int> monsterCredits;
+        public static ConfigEntry<bool> lessLightning;
         public static ConfigEntry<float> dashSlamTime;
         public static ConfigEntry<bool> eliteGolems;
         public static ConfigEntry<int> golemAmount;
         public static ConfigEntry<bool> eclipseSevenChanges;
-        public static ConfigEntry<bool> slowFalseSonLaser;
+        public static ConfigEntry<bool> slowFalseSonLaser2;
+        public static ConfigEntry<bool> slowFalseSonLaser3;
 
         public void Awake()
         {
             Log.Init(Logger);
 
             monsterCredits = Config.Bind("General", "Meridian Credits", 320, "Change the amount of monster credits Prime Meridian has (450 is vanilla default)");
+            lessLightning = Config.Bind("General", "Reduce Lightning Strikes", true, "Reduces amount of lightning in the Prime Meridian leadup (false is vanilla default)");
             dashSlamTime = Config.Bind("General", "Time Between Dash and Slam", 0.4f, "Idle time between the dash and slam attack. (0 will make the boss have no idle time, which is how vanilla works. Keep it between 0-1 second, or else jank will happen.)");
             eliteGolems = Config.Bind("General", "Pre Loop Elite Golems in Fight", false, "Allow golems to be elite in the fight in pre loop (true is vanilla default)");
             golemAmount = Config.Bind("General", "Max Golems in Fight", 4, "Max number of golems allowed to be spawned (5 is vanilla default)");
             eclipseSevenChanges = Config.Bind("General", "Eclipse 7 Laser/Skill Disable Changes", true, "Change the skill cooldowns to be longer for laser and skill disable attacks in Eclipse 7 (false is vanilla default)");
-            slowFalseSonLaser = Config.Bind("General", "Slow False Son during Phase 2 Laser", true, "Gives the False Son a slowing debuff during Phase 2 (false is vanilla default)");
+            slowFalseSonLaser2 = Config.Bind("General", "Slow False Son during Phase 2 Laser", true, "Gives the False Son a slowing debuff during Phase 2 laser (false is vanilla default)");
+            slowFalseSonLaser3 = Config.Bind("General", "Slow False Son during Phase 3 Laser", false, "Gives the False Son a slowing debuff during Phase 3 laser (false is vanilla default)");
 
             On.RoR2.MeridianEventLightningTrigger.Start += (orig, self) =>
             {
@@ -52,11 +58,53 @@ namespace FalseSonBossTweaks
                 orig(self);
             };
 
+            if (lessLightning.Value)
+            {
+                LightningStrikePattern pattern = Addressables.LoadAssetAsync<LightningStrikePattern>("RoR2/DLC2/meridian/DisableSkillsLightning/Default Lightning Pattern.asset").WaitForCompletion();
+                if (pattern)
+                {
+                    pattern.timeBetweenIndividualStrikes = 0.6f;
+                }
+                else
+                {
+                    Log.Info("Nothin found for pattern 1");
+                }
+
+                LightningStrikePattern pattern2 = Addressables.LoadAssetAsync<LightningStrikePattern>("RoR2/DLC2/meridian/DisableSkillsLightning/Default Lightning Pattern_v2.asset").WaitForCompletion();
+                if (pattern2)
+                {
+                    pattern2.timeBetweenIndividualStrikes = 0.6f;
+                }
+                else
+                {
+                    Log.Info("Nothin found for pattern 2");
+                }
+            }
+
+
+            EntityStateConfiguration meridianEventPhase2 = Addressables.LoadAssetAsync<EntityStateConfiguration>
+                ("RoR2/DLC2/meridian/RoR2.MeridianEventPhase2.asset")
+                .WaitForCompletion();
+
+            if (!meridianEventPhase2.TryModifyFieldValue(
+                nameof(EntityStates.MeridianEvent.Phase2.endStateDelay),
+                3))
+            {
+                Log.Error("Could not patch meridianEventPhase2.endStateDelay");
+            }
+
+            if (!meridianEventPhase2.TryModifyFieldValue(
+                nameof(EntityStates.MeridianEvent.Phase2.endStateDelayTimer),
+                3))
+            {
+                Log.Error("Could not patch meridianEventPhase2.endStateDelayTimer");
+            }
+
             On.EntityStates.FalseSonBoss.CorruptedPathsDash.GetNextStateAuthority += CorruptedPathsDash_GetNextStateAuthority;
             On.EntityStates.FalseSonBoss.LunarGazeHoldLeap.OnEnter += LunarGazeHoldLeap_OnEnter;
             On.EntityStates.PrimeMeridian.LunarGazeLaserEnd.OnEnter += LunarGazeLaserEnd_OnEnter;
 
-            On.RoR2.MeridianEventTriggerInteraction.Start += MeridianEventTriggerInteraction_Start; ;
+            On.RoR2.MeridianEventTriggerInteraction.Start += MeridianEventTriggerInteraction_Start;
 
             On.EntityStates.MeridianEvent.Phase1.OnEnter += Phase1_OnEnter;
             On.EntityStates.MeridianEvent.Phase2.OnEnter += Phase2_OnEnter;
@@ -131,6 +179,7 @@ namespace FalseSonBossTweaks
         private void Run_onRunStartGlobal(Run obj)
         {
             Log.Debug($"{obj.selectedDifficulty} {DifficultyIndex.Eclipse7}");
+
             if (obj.selectedDifficulty >= DifficultyIndex.Eclipse7 && eclipseSevenChanges.Value == true)
             {
                 SkillDef primeDevestatorSkill = SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("PrimeDevastator"));
@@ -181,16 +230,23 @@ namespace FalseSonBossTweaks
         {
             orig(self);
             this.bossPhase = MeridianEventState.Phase1;
+            Log.Debug(self.endStateDelay);
         }
         private void Phase2_OnEnter(On.EntityStates.MeridianEvent.Phase2.orig_OnEnter orig, EntityStates.MeridianEvent.Phase2 self)
         {
             orig(self);
             this.bossPhase = MeridianEventState.Phase2;
+            self.durationBeforeEnablingCombatEncounter = 0f;
+            self.durationBeforeRingsSpawn = 0.5f;
+            Log.Debug(self.endStateDelay);
         }
         private void Phase3_OnEnter(On.EntityStates.MeridianEvent.Phase3.orig_OnEnter orig, EntityStates.MeridianEvent.Phase3 self)
         {
             orig(self);
             this.bossPhase = MeridianEventState.Phase3;
+            self.durationBeforeEnablingCombatEncounter = 0f;
+            self.durationBeforeRingsSpawn = 0.5f;
+            Log.Debug(self.endStateDelay);
         }
 
         //private static void LunarGazeLaserFire_FireBullet(ILContext il)
@@ -213,7 +269,11 @@ namespace FalseSonBossTweaks
         {
             orig(self);
             Log.Debug("Added Debuff to False Son!");
-            if (this.bossPhase == MeridianEventState.Phase2 && slowFalseSonLaser.Value == true)
+            if (this.bossPhase == MeridianEventState.Phase2 && slowFalseSonLaser2.Value == true)
+            {
+                self.characterBody.AddBuff(RoR2Content.Buffs.Slow80);
+            }
+            else if (this.bossPhase == MeridianEventState.Phase3 && slowFalseSonLaser3.Value == true)
             {
                 self.characterBody.AddBuff(RoR2Content.Buffs.Slow80);
             }
@@ -234,6 +294,59 @@ namespace FalseSonBossTweaks
                     }
                 }
             }
+        }
+    }
+
+    public static class EntityStateConfigurationExtensions
+    {
+        public static bool TryModifyFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, T value)
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.objectValue && typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)))
+            {
+                serializedField.fieldValue.objectValue = value as UnityEngine.Object;
+                return true;
+            }
+            else if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
+            {
+                serializedField.fieldValue.stringValue = StringSerializer.Serialize(typeof(T), value);
+                return true;
+            }
+            Debug.LogError("Failed to modify field " + fieldName);
+            return false;
+        }
+
+        public static bool TryGetFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : UnityEngine.Object
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.objectValue && typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)))
+            {
+                value = (T)serializedField.fieldValue.objectValue;
+                return true;
+            }
+            if (!string.IsNullOrEmpty(serializedField.fieldValue.stringValue))
+                Debug.LogError($"Failed to return {fieldName} as an Object, try getting the string value instead.");
+            else
+                Debug.LogError("Field is null " + fieldName);
+            value = default;
+            return false;
+        }
+        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : IEquatable<T>
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
+            {
+                value = (T)StringSerializer.Deserialize(typeof(T), serializedField.fieldValue.stringValue);
+                return true;
+            }
+
+            if (serializedField.fieldValue.objectValue)
+                Debug.LogError($"Failed to return {fieldName} as a string, try getting the Object value instead.");
+            else
+                Debug.LogError("Field is null " + fieldName);
+
+            value = default;
+            return false;
         }
     }
 }
